@@ -39,9 +39,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.get('/', (req, res) => {
-  res.send('All Good');
-});
+// app.get('/', (req, res) => {
+//   res.send('All Good');
+// });
 app.use("/api/users", userRoutes);
 app.use("/api/gst", gstRoutes);
 app.use("/api/products", productRoutes);
