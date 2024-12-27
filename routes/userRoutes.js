@@ -199,7 +199,7 @@ router.post('/forgot-password', async (req, res) => {
       },
     });
 
-    const resetLink = `http://localhost:5173/auth/reset-password/${resetToken}`;
+    const resetLink = `${process.env.WEB_URL}/auth/reset-password/${resetToken}`;
 
     const mailOptions = {
       to: user.personalDetails.email,
