@@ -53,8 +53,6 @@ router.post("/verify-gst", async (req, res) => {
 
     const response = await axios.request(options);
 
-    console.log('Complete Raw API Response:', JSON.stringify(response.data, null, 2));
-
     if (response.status === 200) {
       const responseData = response.data.data;
       console.log('Backend: Raw response structure:', {
@@ -85,8 +83,6 @@ router.post("/verify-gst", async (req, res) => {
         gstNumber: responseData.gstin,
         eInvoiceStatus: responseData.e_invoice_status || 'N/A'
       };
-
-      console.log('Backend: Transformed data:', transformedData);
 
       return res.status(200).json({
         success: true,
