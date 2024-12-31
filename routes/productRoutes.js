@@ -130,7 +130,7 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
     }
 
     if (discountedPrice > originalPrice) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Discounted price cannot be greater than original price'
       });
     }
@@ -140,7 +140,7 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
       originalPrice,
       discountedPrice,
       stockAlert,
-      highlights: typeof req.body.highlights === 'string' ? 
+      highlights: typeof req.body.highlights === 'string' ?
         JSON.parse(req.body.highlights) : req.body.highlights,
       imageUrls: updatedImageUrls,
       base64Images: []
@@ -157,8 +157,8 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
     res.json({ message: 'Product updated successfully', product: updatedProduct });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: 'Validation error', 
+      return res.status(400).json({
+        message: 'Validation error',
         details: Object.keys(error.errors).reduce((acc, key) => {
           acc[key] = error.errors[key].message;
           return acc;
@@ -183,6 +183,19 @@ router.delete('/product/:id', verifyAuth, async (req, res) => {
   }
 });
 
+// Get all products with user details
+router.get('/all-products', async (req, res) => {
+  try {
+    const products = await Product.find()
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products with user details:', error);
+    res.status(500).json({ message: 'Error fetching products', error: error.message });
+  }
+});
 
 
 
