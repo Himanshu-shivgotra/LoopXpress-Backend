@@ -33,7 +33,7 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: true,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return value <= this.originalPrice;
       },
       message: props => `Discounted price must be less than or equal to original price`
@@ -49,7 +49,7 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Subcategory is required'],
     trim: true
   },
-  quantity: {
+  stock: {
     type: Number,
     required: [true, 'Quantity is required'],
     min: [0, 'Quantity cannot be negative'],
@@ -93,7 +93,7 @@ const productSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function (next) {
   if (typeof this.originalPrice === 'string') {
     this.originalPrice = Number(this.originalPrice);
   }
