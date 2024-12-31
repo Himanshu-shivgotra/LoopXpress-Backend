@@ -84,7 +84,7 @@ router.get('/product/:id', async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // Optional: Ensure image URLs are correctly processed (e.g., Base64 or static URLs)
+
     if (product.imageUrls && Array.isArray(product.imageUrls)) {
       product.imageUrls = product.imageUrls.map((url) => {
         return url.startsWith('blob:') ? processBlobUrl(url) : url;
