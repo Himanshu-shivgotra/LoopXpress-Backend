@@ -119,9 +119,11 @@ router.put('/update-business-info', authenticate, async (req, res) => {
         $set: {
           'businessDetails.businessName': businessDetails.businessName,
           'businessDetails.businessType': businessDetails.businessType,
+          'businessDetails.brandName': businessDetails.brandName,
           'businessDetails.businessPhone': businessDetails.businessPhone,
           'businessDetails.businessEmail': businessDetails.businessEmail,
           'businessDetails.gstNumber': businessDetails.gstNumber,
+          'businessDetails.otherBusinessType': businessDetails.otherBusinessType,
         }
       },
       { new: true, runValidators: true }

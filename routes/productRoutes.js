@@ -31,18 +31,20 @@ router.post('/add-product', verifyAuth, upload.array('images', 5), async (req, r
     const product = new Product({
       title: req.body.title,
       brand: req.body.brand,
-      imageUrls: imageUrls, // Now using Cloudinary URLs
-      originalPrice: req.body.originalPrice,
-      discountedPrice: req.body.discountedPrice,
+      colors: JSON.parse(req.body.colors),
+      imageUrls: imageUrls,
+      originalPrice: Number(req.body.originalPrice),
+      discountedPrice: Number(req.body.discountedPrice),
       category: req.body.category,
       subcategory: req.body.subcategory,
-      quantity: req.body.quantity,
+      quantity: Number(req.body.quantity),
+      stockAlert: Number(req.body.stockAlert),
+      weight: Number(req.body.weight),
       description: req.body.description,
       highlights: req.body.highlights,
       warranty: req.body.warranty,
       shippingInfo: req.body.shippingInfo,
       manufacturingDate: req.body.manufacturingDate,
-      stockAlert: req.body.stockAlert,
       user: req.user.id,
     });
 
@@ -84,7 +86,7 @@ router.get('/product/:id', async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // Optional: Ensure image URLs are correctly processed (e.g., Base64 or static URLs)
+
     if (product.imageUrls && Array.isArray(product.imageUrls)) {
       product.imageUrls = product.imageUrls.map((url) => {
         return url.startsWith('blob:') ? processBlobUrl(url) : url;
@@ -130,7 +132,7 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
     }
 
     if (discountedPrice > originalPrice) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Discounted price cannot be greater than original price'
       });
     }
@@ -140,7 +142,7 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
       originalPrice,
       discountedPrice,
       stockAlert,
-      highlights: typeof req.body.highlights === 'string' ? 
+      highlights: typeof req.body.highlights === 'string' ?
         JSON.parse(req.body.highlights) : req.body.highlights,
       imageUrls: updatedImageUrls,
       base64Images: []
@@ -157,8 +159,8 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
     res.json({ message: 'Product updated successfully', product: updatedProduct });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: 'Validation error', 
+      return res.status(400).json({
+        message: 'Validation error',
         details: Object.keys(error.errors).reduce((acc, key) => {
           acc[key] = error.errors[key].message;
           return acc;
@@ -183,6 +185,19 @@ router.delete('/product/:id', verifyAuth, async (req, res) => {
   }
 });
 
+// Get all products with user details
+router.get('/all-products', async (req, res) => {
+  try {
+    const products = await Product.find()
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products with user details:', error);
+    res.status(500).json({ message: 'Error fetching products', error: error.message });
+  }
+});
 
 
 
