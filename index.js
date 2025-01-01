@@ -17,8 +17,8 @@ const app = express();
 // Enable CORS with dynamic origin
 app.use(
   cors({
-    origin: '*',
-    optionsSuccessStatus: 200, 
+    origin: 'http://your-frontend-url.com',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true
   })
 );

@@ -11,6 +11,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Brand is required'],
     trim: true
+  },  
+  colors: {
+    type: [String],
+    required: [true, 'Colors are required'],
   },
   imageUrls: [{
     type: String,
@@ -33,7 +37,7 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: true,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return value <= this.originalPrice;
       },
       message: props => `Discounted price must be less than or equal to original price`
@@ -52,6 +56,16 @@ const productSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: [true, 'Quantity is required'],
+    min: [0, 'Quantity cannot be negative'],
+  },
+  stock: {
+    type: Number,
+    required: [true, 'Quantity is required'],
+    min: [0, 'Quantity cannot be negative'],
+  },
+  weight: {
+    type: Number,
+    required: true,
     min: [0, 'Quantity cannot be negative'],
   },
   description: {
@@ -93,7 +107,7 @@ const productSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function (next) {
   if (typeof this.originalPrice === 'string') {
     this.originalPrice = Number(this.originalPrice);
   }
@@ -102,6 +116,12 @@ productSchema.pre('save', function(next) {
   }
   if (typeof this.stockAlert === 'string') {
     this.stockAlert = Number(this.stockAlert);
+  }
+  if (typeof this.quantity === 'string') {
+    this.quantity = Number(this.quantity);
+  }
+  if (typeof this.weight === 'string') {
+    this.weight = Number(this.weight);
   }
   next();
 });
