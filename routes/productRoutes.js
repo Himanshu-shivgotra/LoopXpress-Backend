@@ -31,7 +31,7 @@ router.post('/add-product', verifyAuth, upload.array('images', 5), async (req, r
     const product = new Product({
       title: req.body.title,
       brand: req.body.brand,
-      colors: JSON.parse(req.body.colors),
+      colors: req.body.colors,
       imageUrls: imageUrls,
       originalPrice: Number(req.body.originalPrice),
       discountedPrice: Number(req.body.discountedPrice),
