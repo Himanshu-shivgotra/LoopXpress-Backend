@@ -131,7 +131,6 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
     if (isNaN(parsedOriginalPrice) || isNaN(parsedDiscountedPrice) || isNaN(parsedStockAlert)) {
       return res.status(400).json({ message: 'Invalid numeric values' });
     }
-
     if (parsedDiscountedPrice > parsedOriginalPrice) {
       return res.status(400).json({ message: 'Discounted price cannot be greater than original price' });
     }
