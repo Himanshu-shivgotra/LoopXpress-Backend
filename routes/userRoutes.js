@@ -34,7 +34,7 @@ router.post('/signin', async (req, res) => {
     }
 
     // Compare the provided password with the stored hashed password
-    const isMatch =await user.isValidPassword(password, user.personalDetails.password);
+    const isMatch = await user.isValidPassword(password, user.personalDetails.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
@@ -90,11 +90,11 @@ router.put('/update-personal-info', authenticate, async (req, res) => {
           'personalDetails.email': personalDetails.email,
           'personalDetails.phoneNumber': personalDetails.phoneNumber,
           'personalDetails.address': personalDetails.address,
-          
+
         }
       },
       { new: true, runValidators: true }
-    ).select('-personalDetails.password'); 
+    ).select('-personalDetails.password');
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -226,7 +226,7 @@ router.post('/reset-password/:token', async (req, res) => {
   try {
     const user = await User.findOne({
       resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }, 
+      resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
@@ -235,7 +235,7 @@ router.post('/reset-password/:token', async (req, res) => {
     }
 
     user.personalDetails.password = newPassword;
-    user.resetPasswordToken = null; 
+    user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
 
     await user.save();
