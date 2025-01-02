@@ -18,13 +18,18 @@ connectDB();
 const app = express();
 
 // Enable CORS with dynamic origin
-app.use(
-  cors({
-    origin: '*',
-    optionsSuccessStatus: 200,
-    credentials: true
-  })
-);
+app.use(cors({
+  // origin: (origin, callback) => {
+  //   if (!origin || allowedOrigins.includes(origin)) {
+  //     callback(null, true);
+  //   } else {
+  //     callback(new Error('Not allowed by CORS'));
+  //   }
+  // },
+  origin: "*",
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 
 export const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
