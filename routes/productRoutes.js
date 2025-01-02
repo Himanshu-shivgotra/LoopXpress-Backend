@@ -102,6 +102,7 @@ router.get('/product/:id', async (req, res) => {
 router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (req, res) => {
   try {
     let newImageUrls = [];
+
     if (req.files && req.files.length > 0) {
       const uploadPromises = req.files.map(file => {
         return new Promise((resolve, reject) => {
@@ -121,29 +122,28 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
     const existingImageUrls = JSON.parse(req.body.existingImageUrls || '[]');
     const updatedImageUrls = [...existingImageUrls, ...newImageUrls];
 
-    const originalPrice = Number(req.body.originalPrice);
-    const discountedPrice = Number(req.body.discountedPrice);
-    const stockAlert = Number(req.body.stockAlert);
+    const { originalPrice, discountedPrice, stockAlert, highlights, ...otherData } = req.body;
 
-    if (isNaN(originalPrice) || isNaN(discountedPrice) || isNaN(stockAlert)) {
+    const parsedOriginalPrice = Number(originalPrice);
+    const parsedDiscountedPrice = Number(discountedPrice);
+    const parsedStockAlert = Number(stockAlert);
+
+    if (isNaN(parsedOriginalPrice) || isNaN(parsedDiscountedPrice) || isNaN(parsedStockAlert)) {
       return res.status(400).json({ message: 'Invalid numeric values' });
     }
 
-    if (discountedPrice > originalPrice) {
-      return res.status(400).json({
-        message: 'Discounted price cannot be greater than original price'
-      });
+    if (parsedDiscountedPrice > parsedOriginalPrice) {
+      return res.status(400).json({ message: 'Discounted price cannot be greater than original price' });
     }
 
     const productData = {
-      ...req.body,
-      originalPrice,
-      discountedPrice,
-      stockAlert,
-      highlights: typeof req.body.highlights === 'string' ?
-        JSON.parse(req.body.highlights) : req.body.highlights,
+      ...otherData,
+      originalPrice: parsedOriginalPrice,
+      discountedPrice: parsedDiscountedPrice,
+      stockAlert: parsedStockAlert,
+      highlights: typeof highlights === 'string' ? JSON.parse(highlights) : highlights,
       imageUrls: updatedImageUrls,
-      base64Images: []
+      base64Images: [] // Clear base64Images if necessary
     };
 
     const existingProduct = await Product.findById(req.params.id);
@@ -156,6 +156,8 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
 
     res.json({ message: 'Product updated successfully', product: updatedProduct });
   } catch (error) {
+    console.error('Error updating product:', error); // Enhanced error logging
+
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         message: 'Validation error',
@@ -165,6 +167,7 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
         }, {})
       });
     }
+
     res.status(500).json({ message: 'Error updating product', error: error.message });
   }
 });
