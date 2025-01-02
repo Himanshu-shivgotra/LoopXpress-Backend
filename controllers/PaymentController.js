@@ -18,7 +18,7 @@ export const checkout = async (req, res) => {
         }
 
         const options = {
-            amount: Math.round(Number(amount) * 100), // Convert to paise
+            amount: Math.round(Number(amount) * 100),
             currency: "INR",
         };
         const order = await instance.orders.create(options);
