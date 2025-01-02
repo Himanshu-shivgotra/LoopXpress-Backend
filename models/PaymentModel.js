@@ -53,6 +53,22 @@ const orderSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    title: {
+        type: String,
+        required: true,
+    },
+    brand: {
+        type: String,
+        required: true,
+    },
+    category: {
+        type: String,
+        required: true,
+    },
+    subcategory: {
+        type: String,
+        required: true,
+    },
     status: {
         type: String,
         enum: ['Order Placed', 'Order Transit', 'Out for Delivery', 'Delivered'],
@@ -63,6 +79,7 @@ const orderSchema = new mongoose.Schema({
         default: Date.now,
     }
 });
+
 
 export const Payment = mongoose.model("Payment", paymentSchema);
 export const Order = mongoose.model("Order", orderSchema);

@@ -38,9 +38,9 @@ export const checkout = async (req, res) => {
 
 export const paymentVerification = async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, itemname, amount, currency } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount, currency, items } = req.body;
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !amount || !currency) {
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !amount || !currency || !items) {
             return res.status(400).json({ success: false, message: "Invalid payment data" });
         }
 
@@ -63,14 +63,21 @@ export const paymentVerification = async (req, res) => {
                 currency
             });
 
-            await Order.create({
-                razorpay_order_id,
-                razorpay_payment_id,
-                razorpay_signature,
-                status: "Order Placed",
-                amount,
-                currency
-            });
+            // Save each item in the order
+            for (const item of items) {
+                await Order.create({
+                    razorpay_order_id,
+                    razorpay_payment_id,
+                    razorpay_signature,
+                    status: "Order Placed",
+                    amount,
+                    currency,
+                    title: item.title,
+                    brand: item.brand,
+                    category: item.category,
+                    subcategory: item.subcategory
+                });
+            }
 
             res.status(200).json({
                 success: true,
@@ -92,3 +99,4 @@ export const paymentVerification = async (req, res) => {
         });
     }
 };
+
