@@ -58,11 +58,6 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Quantity is required'],
     min: [0, 'Quantity cannot be negative'],
   },
-  stock: {
-    type: Number,
-    required: [true, 'Quantity is required'],
-    min: [0, 'Quantity cannot be negative'],
-  },
   weight: {
     type: Number,
     required: true,
