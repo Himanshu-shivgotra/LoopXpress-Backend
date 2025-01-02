@@ -31,18 +31,20 @@ router.post('/add-product', verifyAuth, upload.array('images', 5), async (req, r
     const product = new Product({
       title: req.body.title,
       brand: req.body.brand,
-      imageUrls: imageUrls, // Now using Cloudinary URLs
-      originalPrice: req.body.originalPrice,
-      discountedPrice: req.body.discountedPrice,
+      colors: JSON.parse(req.body.colors),
+      imageUrls: imageUrls,
+      originalPrice: Number(req.body.originalPrice),
+      discountedPrice: Number(req.body.discountedPrice),
       category: req.body.category,
       subcategory: req.body.subcategory,
-      quantity: req.body.quantity,
+      quantity: Number(req.body.quantity),
+      stockAlert: Number(req.body.stockAlert),
+      weight: Number(req.body.weight),
       description: req.body.description,
       highlights: req.body.highlights,
       warranty: req.body.warranty,
       shippingInfo: req.body.shippingInfo,
       manufacturingDate: req.body.manufacturingDate,
-      stockAlert: req.body.stockAlert,
       user: req.user.id,
     });
 
@@ -83,6 +85,7 @@ router.get('/product/:id', async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
+
 
 
     if (product.imageUrls && Array.isArray(product.imageUrls)) {
