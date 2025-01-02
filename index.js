@@ -18,33 +18,13 @@ connectDB();
 const app = express();
 
 // Enable CORS with dynamic origin
-// app.use(
-//   cors({
-//     origin: '*',
-//     optionsSuccessStatus: 200,
-//     credentials: true
-//   })
-// );
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // List of allowed origins
-    const allowedOrigins = [
-      'https://loopxpress.vercel.app',
-      'https://loop-xpress-backend.vercel.app'
-    ];
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
-  optionsSuccessStatus: 204,
-  allowedHeaders: "Content-Type, Authorization",
-}));
-
+app.use(
+  cors({
+    origin: '*',
+    optionsSuccessStatus: 200,
+    credentials: true
+  })
+);
 
 export const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
