@@ -28,7 +28,7 @@ router.route('/track/:orderId').get(async (req, res) => {
             res.status(404).json({ success: false, message: 'Order not found' });
         }
     } catch (error) {
-        console.error(`[Order Tracking] Server error: ${error.message}`);
+
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 });
@@ -37,7 +37,6 @@ router.route('/track/:orderId').get(async (req, res) => {
 router.route('/update/:orderId').put(validateOrderStatus, async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
-    console.log(`[Order Update] Updating Order ID: ${orderId} to Status: ${status}`);
     try {
         const order = await Order.findOneAndUpdate(
             { razorpay_order_id: orderId },
@@ -57,7 +56,7 @@ router.route('/update/:orderId').put(validateOrderStatus, async (req, res) => {
 
 // Route to get all orders
 router.route('/').get(async (req, res) => {
-    console.log('[Order Fetch] Fetching all orders');
+
     try {
         const orders = await Order.find().select('-razorpay_signature');
         if (orders.length > 0) {
