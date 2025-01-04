@@ -11,6 +11,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Brand is required'],
     trim: true
+  },  
+  colors: {
+    type: [String],
+    required: [true, 'Colors are required'],
   },
   imageUrls: [{
     type: String,
@@ -53,6 +57,10 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Quantity is required'],
     min: [0, 'Quantity cannot be negative'],
+  },
+  weight: {
+    type: String,
+    required: true,
   },
   description: {
     type: String,
@@ -102,6 +110,9 @@ productSchema.pre('save', function (next) {
   }
   if (typeof this.stockAlert === 'string') {
     this.stockAlert = Number(this.stockAlert);
+  }
+  if (typeof this.quantity === 'string') {
+    this.quantity = Number(this.quantity);
   }
   next();
 });
