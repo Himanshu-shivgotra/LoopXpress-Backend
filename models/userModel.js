@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      brandName: {
+        type: String,
+        required: true,
+      },
       businessPhone: {
         type: String,
         required: true,
@@ -53,6 +57,10 @@ const userSchema = new mongoose.Schema(
       gstNumber: {
         type: String,
         required: true,
+      },
+      otherBusinessType: {
+        type: String,
+        default: '',
       },
     },
     bankDetails: {
