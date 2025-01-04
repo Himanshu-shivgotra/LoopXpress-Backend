@@ -6,6 +6,10 @@ const consumerSchema = new mongoose.Schema({
         type: String,
         required: [true, 'name is required']
     },
+    uid: {
+        type: String,
+        required: true
+    },
     email: {
         type: String,
         required: [true, "email is required"],
@@ -20,20 +24,20 @@ const consumerSchema = new mongoose.Schema({
     },
     phoneNumber: {
         type: String,
-        required: [true, "phone number is required"]
+        default: null
     },
     address: {
         type: String,
-        required: [true, "address is required"]
+        default: null
     },
     dateOfBirth: {
         type: Date,
-        required: [true, "date of birth is required"]
+        default: null
     }
 }, { timestamps: true });
 
 // Pre-save middleware for encrypting password
-consumerSchema.pre('save', async function(next) {
+consumerSchema.pre('save', async function (next) {
     const hashRound = 10;
     if (this.password && (this.isModified('password') || this.isNew)) {
         try {
@@ -46,7 +50,7 @@ consumerSchema.pre('save', async function(next) {
 });
 
 // Mongoose method to validate if password is correct
-consumerSchema.methods.isValidPassword = async function(password) {
+consumerSchema.methods.isValidPassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
