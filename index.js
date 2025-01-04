@@ -9,6 +9,7 @@ import gstRoutes from "./routes/gstRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import paymentRoute from "./routes/paymentRoutes.js"
 import orderRoute from "./routes/OrderTrackingRoutes.js"
+import consumerRoutes from './routes/consumersRoutes.js';
 
 dotenv.config();
 const port = process.env.PORT || 5000;
@@ -26,7 +27,7 @@ app.use(cors({
   //     callback(new Error('Not allowed by CORS'));
   //   }
   // },
-  origin: "*",
+  origin: "http://localhost:5173",
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -45,6 +46,7 @@ app.use("/api/gst", gstRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoute)
 app.use("/api/orders", orderRoute)
+app.use("/api/consumers", consumerRoutes);
 
 app.listen(port, () => console.log(`Server running on port: ${port}`));
 

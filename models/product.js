@@ -59,9 +59,8 @@ const productSchema = new mongoose.Schema({
     min: [0, 'Quantity cannot be negative'],
   },
   weight: {
-    type: Number,
+    type: String,
     required: true,
-    min: [0, 'Quantity cannot be negative'],
   },
   description: {
     type: String,
@@ -114,9 +113,6 @@ productSchema.pre('save', function (next) {
   }
   if (typeof this.quantity === 'string') {
     this.quantity = Number(this.quantity);
-  }
-  if (typeof this.weight === 'string') {
-    this.weight = Number(this.weight);
   }
   next();
 });
