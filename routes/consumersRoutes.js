@@ -1,7 +1,8 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import ConsumerModel from '../models/consumers.js';
-import authenticateConsumer from '../middleware/authenticateConsumer.js';
+import authenticate from '../middleware/authenticate.js';
+import verifyAuth from '../middleware/verifyAuth.js';
 
 const router = express.Router();
 
@@ -21,16 +22,16 @@ router.post('/signup', async (req, res) => {
       name,
       email,
       password,
-      phoneNumber,
-      address,
-      dateOfBirth
+      phoneNumber: phoneNumber || null,
+      address: address || null,
+      dateOfBirth: dateOfBirth || null
     });
 
     await newConsumer.save();
 
     // Generate token
     const token = jwt.sign({ id: newConsumer._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
-    
+
     res.status(201).json({ token, message: 'Consumer registered successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -62,9 +63,9 @@ router.post('/login', async (req, res) => {
 });
 
 // Fetch consumer details
-router.get('/profile/:id', authenticateConsumer, async (req, res) => {
+router.get('/profile', authenticate, async (req, res) => {
   try {
-    const consumerId = req.params.id;
+    const consumerId = req.consumer?.id;
     const consumer = await ConsumerModel.findById(consumerId).select('-password');
     if (!consumer) {
       return res.status(404).json({ message: 'Consumer not found' });
@@ -74,5 +75,37 @@ router.get('/profile/:id', authenticateConsumer, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Google Sign-In
+router.post('/google-login', async (req, res) => {
+  try {
+    const { uid, email, name, phoneNumber, address, dateOfBirth } = req.body;
+
+    let consumer = await ConsumerModel.findOne({ email });
+
+    if (!consumer) {
+      consumer = new ConsumerModel({
+        uid,
+        email,
+        name,
+        phoneNumber: phoneNumber || null,
+        address: address || null,
+        dateOfBirth: dateOfBirth || null,
+        password: 'defaultpassword' // Placeholder password
+      });
+
+      await consumer.save();
+    }
+
+    // Generate token with _id, not uid
+    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({ token, message: 'Google login successful' });
+  } catch (error) {
+    console.error('Error in Google login:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 export default router;
