@@ -39,7 +39,7 @@ router.post('/add-product', verifyAuth, upload.array('images', 5), async (req, r
       subcategory: req.body.subcategory,
       quantity: Number(req.body.quantity),
       stockAlert: Number(req.body.stockAlert),
-      weight: Number(req.body.weight),
+      weight: req.body.weight,
       description: req.body.description,
       highlights: req.body.highlights,
       warranty: req.body.warranty,
@@ -146,7 +146,8 @@ router.put('/update-product/:id', verifyAuth, upload.array('images', 5), async (
       stockAlert: parsedStockAlert,
       highlights: typeof highlights === 'string' ? JSON.parse(highlights) : highlights,
       imageUrls: updatedImageUrls,
-      base64Images: [] // Clear base64Images if necessary
+      base64Images: [], // Clear base64Images if necessary
+      weight: req.body.weight,
     };
 
     const existingProduct = await Product.findById(req.params.id);
