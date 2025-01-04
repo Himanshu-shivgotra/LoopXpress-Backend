@@ -1,11 +1,11 @@
 import express from 'express';
-import { checkout, PaymentVerification } from '../controllers/PaymentController.js';
+import { checkout, paymentVerification } from '../controllers/PaymentController.js';
 
 const router = express.Router();
 
 
 router.route("/checkout").post(checkout)
-router.route("/paymentverification").post(PaymentVerification)
+router.route("/paymentVerification").post(paymentVerification)
 
 
 

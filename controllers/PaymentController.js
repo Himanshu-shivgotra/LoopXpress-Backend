@@ -28,7 +28,7 @@ export const checkout = async (req, res) => {
             order,
         });
     } catch (error) {
-        console.error("Error during checkout:", error);
+        console.error("Error during checkout:", error.message);
         res.status(500).json({
             success: false,
             message: "Internal Server Error",
@@ -36,16 +36,15 @@ export const checkout = async (req, res) => {
     }
 };
 
-
-export const PaymentVerification = async (req, res) => {
+export const paymentVerification = async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, itemname } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount, currency, items } = req.body;
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !amount || !currency || !items) {
             return res.status(400).json({ success: false, message: "Invalid payment data" });
         }
 
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
 
         const expectedSignature = crypto
             .createHmac("sha256", process.env.RAZORPAY_API_SECRET)
@@ -60,19 +59,32 @@ export const PaymentVerification = async (req, res) => {
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature,
+                amount,
+                currency
             });
 
-            await Order.create({
-                razorpay_order_id,
-                razorpay_payment_id,
-                razorpay_signature,
-                status: "Order Placed",
-                itemname, // Ensure `itemname` is passed in the request
-            });
+            // Save each item in the order
+            for (const item of items) {
+                await Order.create({
+                    razorpay_order_id,
+                    razorpay_payment_id,
+                    razorpay_signature,
+                    status: "Order Placed",
+                    amount,
+                    currency,
+                    title: item.title,
+                    brand: item.brand,
+                    category: item.category,
+                    subcategory: item.subcategory
+                });
+            }
 
-            res.redirect(
-                `${process.env.WEB_URL}/paymentsuccess?reference=${razorpay_payment_id}&orderId=${razorpay_order_id}`
-            );
+            res.status(200).json({
+                success: true,
+                message: "Payment verified successfully",
+                payment_id: razorpay_payment_id,
+                order_id: razorpay_order_id,
+            });
         } else {
             res.status(400).json({
                 success: false,
@@ -80,10 +92,11 @@ export const PaymentVerification = async (req, res) => {
             });
         }
     } catch (error) {
-        console.error("Error during payment verification:", error);
+        console.error("Error during payment verification:", error.message);
         res.status(500).json({
             success: false,
             message: "Internal Server Error",
         });
     }
 };
+
