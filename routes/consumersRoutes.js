@@ -30,7 +30,7 @@ router.post('/signup', async (req, res) => {
     await newConsumer.save();
 
     // Generate token
-    const token = jwt.sign({ id: newConsumer._id }, process.env.JWT_SECRET || '7d4aa8f99e1d1a5f2dc46d43dc66b58585674c2276f5b66c4fe62c0fd97f8fd7', { expiresIn: '1h' });
+    const token = jwt.sign({ id: newConsumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(201).json({ token, message: 'Consumer registered successfully' });
   } catch (error) {
@@ -55,7 +55,6 @@ router.post('/login', async (req, res) => {
 
     // Generate token
     const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log("with process from login", process.env.JWT_SECRET);
     res.status(200).json({ token, message: 'Login successful' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -125,8 +124,6 @@ router.delete('/cart/:productId', authenticate, async (req, res) => {
 router.post('/google-login', async (req, res) => {
   try {
     const { email, name, phoneNumber, address, dateOfBirth, uid } = req.body;
-    console.log("req.body", req.body)
-
 
     let consumer = await ConsumerModel.findOne({ email });
     console.log("consumer", consumer)
@@ -146,7 +143,7 @@ router.post('/google-login', async (req, res) => {
 
     // Generate token with _id 
     const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log(token)
+
     res.status(200).json({ token, message: 'Google login successful' });
   } catch (error) {
     console.error('Error in Google login:', error);
