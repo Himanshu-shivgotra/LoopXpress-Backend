@@ -65,6 +65,8 @@ consumerSchema.methods.isValidPassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
+
+
 // Create a mongoose model for Consumer
 const ConsumerModel = mongoose.model('Consumer', consumerSchema);
 

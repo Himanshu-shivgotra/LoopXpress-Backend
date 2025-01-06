@@ -54,8 +54,8 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
-
+    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    console.log("with process from login", process.env.JWT_SECRET);
     res.status(200).json({ token, message: 'Login successful' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -124,32 +124,37 @@ router.delete('/cart/:productId', authenticate, async (req, res) => {
 // Google Sign-In
 router.post('/google-login', async (req, res) => {
   try {
-    const { email, name, phoneNumber, address, dateOfBirth } = req.body;
+    const { email, name, phoneNumber, address, dateOfBirth, uid } = req.body;
+    console.log("req.body", req.body)
+
 
     let consumer = await ConsumerModel.findOne({ email });
-
+    console.log("consumer", consumer)
     if (!consumer) {
-      consumer = new ConsumerModel({
-        name,
-        email,
-        phoneNumber: phoneNumber || null,
-        address: address || null,
-        dateOfBirth: dateOfBirth || null,
-        password: 'defaultpassword', // Placeholder password
-        cart: []
-      });
+      consumer = await ConsumerModel.create(
+        {
+          name,
+          email,
+          phoneNumber: phoneNumber || null,
+          address: address || null,
+          dateOfBirth: dateOfBirth || null,
+          password: uid,
+          cart: []
 
-      await consumer.save();
+        })
     }
 
     // Generate token with _id 
-    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET || '7d4aa8f99e1d1a5f2dc46d43dc66b58585674c2276f5b66c4fe62c0fd97f8fd7');
-
+    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    console.log(token)
     res.status(200).json({ token, message: 'Google login successful' });
   } catch (error) {
     console.error('Error in Google login:', error);
     res.status(500).json({ error: error.message });
   }
 });
+
+// Apple Sign-In
+// router.post('/apple-login', async (req, res) => {
 
 export default router;
