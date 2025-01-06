@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import ConsumerModel from '../models/consumers.js';
-import authenticateConsumer from '../middleware/authenticateConsumer.js';
+import authenticate from '../middleware/authenticate.js';
 
 const router = express.Router();
 
@@ -21,16 +21,17 @@ router.post('/signup', async (req, res) => {
       name,
       email,
       password,
-      phoneNumber,
-      address,
-      dateOfBirth
+      phoneNumber: phoneNumber || null,
+      address: address || null,
+      dateOfBirth: dateOfBirth || null,
+      cart: []
     });
 
     await newConsumer.save();
 
     // Generate token
-    const token = jwt.sign({ id: newConsumer._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
-    
+    const token = jwt.sign({ id: newConsumer._id }, process.env.JWT_SECRET || '7d4aa8f99e1d1a5f2dc46d43dc66b58585674c2276f5b66c4fe62c0fd97f8fd7', { expiresIn: '1h' });
+
     res.status(201).json({ token, message: 'Consumer registered successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -62,15 +63,91 @@ router.post('/login', async (req, res) => {
 });
 
 // Fetch consumer details
-router.get('/profile/:id', authenticateConsumer, async (req, res) => {
+router.get('/profile', authenticate, async (req, res) => {
   try {
-    const consumerId = req.params.id;
+    const consumerId = req.consumer?.id;
     const consumer = await ConsumerModel.findById(consumerId).select('-password');
     if (!consumer) {
       return res.status(404).json({ message: 'Consumer not found' });
     }
     res.status(200).json(consumer);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add product to cart
+router.post('/cart', authenticate, async (req, res) => {
+  try {
+    const consumerId = req.consumer?.id;
+    const { productId, quantity } = req.body;
+
+    const consumer = await ConsumerModel.findById(consumerId);
+    if (!consumer) {
+      return res.status(404).json({ message: 'Consumer not found' });
+    }
+
+    const cartItem = consumer.cart.find(item => item.productId.toString() === productId);
+    if (cartItem) {
+      cartItem.quantity += quantity;
+    } else {
+      consumer.cart.push({ productId, quantity });
+    }
+
+    await consumer.save();
+    res.status(200).json({ message: 'Product added to cart' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove product from cart
+router.delete('/cart/:productId', authenticate, async (req, res) => {
+  try {
+    const consumerId = req.consumer?.id;
+    const { productId } = req.params;
+
+    const consumer = await ConsumerModel.findById(consumerId);
+    if (!consumer) {
+      return res.status(404).json({ message: 'Consumer not found' });
+    }
+
+    consumer.cart = consumer.cart.filter(item => item.productId.toString() !== productId);
+    await consumer.save();
+
+    res.status(200).json({ message: 'Product removed from cart' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Google Sign-In
+router.post('/google-login', async (req, res) => {
+  try {
+    const { email, name, phoneNumber, address, dateOfBirth } = req.body;
+
+    let consumer = await ConsumerModel.findOne({ email });
+
+    if (!consumer) {
+      consumer = new ConsumerModel({
+        name,
+        email,
+        phoneNumber: phoneNumber || null,
+        address: address || null,
+        dateOfBirth: dateOfBirth || null,
+        password: 'defaultpassword', // Placeholder password
+        cart: []
+      });
+
+      await consumer.save();
+    }
+
+    // Generate token with _id 
+    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET || '7d4aa8f99e1d1a5f2dc46d43dc66b58585674c2276f5b66c4fe62c0fd97f8fd7');
+
+    res.status(200).json({ token, message: 'Google login successful' });
+  } catch (error) {
+    console.error('Error in Google login:', error);
     res.status(500).json({ error: error.message });
   }
 });
