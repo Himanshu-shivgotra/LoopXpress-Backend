@@ -11,10 +11,11 @@ const authenticate = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || '7d4aa8f99e1d1a5f2dc46d43dc66b58585674c2276f5b66c4fe62c0fd97f8fd7');
-
+    console.log("decoded", decoded);
     // Fetch user or consumer by decoded.id
-    let user = await User.findById(decoded.id);
-    let consumer = await ConsumerModel.findById(decoded.id);
+    const user = await User.findById(decoded.id);
+    const consumer = await ConsumerModel.findById(decoded.id);
+    console.log("consumer", consumer);
 
     if (!user && !consumer) {
       return res.status(401).json({ message: 'User or Consumer not found, authorization denied' });
@@ -24,11 +25,9 @@ const authenticate = async (req, res, next) => {
       req.user = {
         id: user._id,
         email: user.personalDetails.email,
-        username: user.personalDetails.username // Assuming username is stored in personalDetails
+        fullname: user.personalDetails.fullName
       };
-    }
-
-    if (consumer) {
+    } else if (consumer) {
       req.consumer = {
         id: consumer._id,
         email: consumer.email,
@@ -43,6 +42,5 @@ const authenticate = async (req, res, next) => {
     res.status(401).json({ message: 'Token is not valid' });
   }
 };
-
 
 export default authenticate;
