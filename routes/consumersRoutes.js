@@ -61,6 +61,22 @@ router.post('/login', async (req, res) => {
   }
 });
 
+
+// Fetch cart items
+router.get('/cart', authenticate, async (req, res) => {
+  try {
+    const consumerId = req.consumer?.id;
+    const consumer = await ConsumerModel.findById(consumerId).populate('cart.productId');
+    if (!consumer) {
+      return res.status(404).json({ message: 'Consumer not found' });
+    }
+    res.status(200).json(consumer.cart);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 // Fetch consumer details
 router.get('/profile', authenticate, async (req, res) => {
   try {
@@ -79,54 +95,118 @@ router.get('/profile', authenticate, async (req, res) => {
 router.post('/cart', authenticate, async (req, res) => {
   try {
     const consumerId = req.consumer?.id;
-    const { productId, quantity } = req.body;
+    const { productId, imageUrl, brand, category, subcategory, price, quantity, title } = req.body;
 
-    const consumer = await ConsumerModel.findById(consumerId);
+    // Validate required fields
+    if (!productId || !imageUrl || !brand || !category || !price || !title) {
+      return res.status(400).json({ message: 'All required fields must be provided' });
+    }
+
+    const consumer = await ConsumerModel.findById(consumerId).populate('cart.productId');
     if (!consumer) {
       return res.status(404).json({ message: 'Consumer not found' });
     }
 
-    const cartItem = consumer.cart.find(item => item.productId.toString() === productId);
-    if (cartItem) {
-      cartItem.quantity += quantity;
-    } else {
-      consumer.cart.push({ productId, quantity });
+    const cartItemIndex = consumer.cart.findIndex(item => item.productId.toString() === productId.toString());
+    if (cartItemIndex !== -1) {
+      return res.status(400).json({ message: 'Product already in cart' });
     }
 
+    consumer.cart.push({ productId, quantity, imageUrl, brand, category, subcategory, price, title });
+
     await consumer.save();
-    res.status(200).json({ message: 'Product added to cart' });
+    res.status(200).json({ message: 'Product added to cart', cart: consumer.cart });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Remove product from cart
-router.delete('/cart/:productId', authenticate, async (req, res) => {
+router.put('/cart/update', authenticate, async (req, res) => {
   try {
     const consumerId = req.consumer?.id;
-    const { productId } = req.params;
+    const { productId, quantity } = req.body;
+
+    // Validate required fields
+    if (!productId || typeof quantity !== 'number') {
+      return res.status(400).json({ message: 'Product ID and quantity must be provided' });
+    }
 
     const consumer = await ConsumerModel.findById(consumerId);
     if (!consumer) {
       return res.status(404).json({ message: 'Consumer not found' });
     }
 
-    consumer.cart = consumer.cart.filter(item => item.productId.toString() !== productId);
-    await consumer.save();
+    const cartItemIndex = consumer.cart.findIndex(item => item.productId.toString() === productId.toString());
+    if (cartItemIndex === -1) {
+      return res.status(400).json({ message: 'Product not found in cart' });
+    }
 
-    res.status(200).json({ message: 'Product removed from cart' });
+    // Update the quantity without triggering validation for other fields
+    consumer.cart[cartItemIndex].quantity = quantity;
+
+    // Save only the specific field updates
+    await consumer.save({ validateModifiedOnly: true });
+
+    res.status(200).json({ message: 'Cart updated', cart: consumer.cart });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+
+// router.delete('/cart/:productId', authenticate, async (req, res) => {
+//   try {
+//     const consumerId = req.consumer?.id;
+//     const { productId } = req.params;
+
+//     // Find the consumer
+//     const consumer = await ConsumerModel.findById(consumerId);
+//     if (!consumer) {
+//       return res.status(404).json({ message: 'Consumer not found' });
+//     }
+
+//     // Debugging logs
+//     console.log("Cart before removal:", consumer.cart);
+
+//     // Remove the item with the matching productId
+//     const initialCartLength = consumer.cart.length;
+//     consumer.cart = consumer.cart.filter(
+//       item => String(item.productId) !== String(productId)
+//     );
+
+//     // Check if the item was actually removed
+//     if (consumer.cart.length === initialCartLength) {
+//       return res.status(404).json({ message: 'Product not found in cart' });
+//     }
+
+//     // Debugging: Log the cart after removal
+//     console.log("Cart after removal:", consumer.cart);
+
+//     // Save changes to the database
+//     const updatedConsumer = await consumer.save();
+
+//     // Log the saved consumer to check if changes are committed
+//     console.log("Consumer after save:", updatedConsumer);
+
+//     res.status(200).json({ message: 'Product removed from cart', cart: consumer.cart });
+//   } catch (error) {
+//     console.error("Error in removing item from cart:", error.message);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+
+
+
+
 // Google Sign-In
+
+
 router.post('/google-login', async (req, res) => {
   try {
     const { email, name, phoneNumber, address, dateOfBirth, uid } = req.body;
 
     let consumer = await ConsumerModel.findOne({ email });
-    console.log("consumer", consumer)
     if (!consumer) {
       consumer = await ConsumerModel.create(
         {
@@ -142,7 +222,7 @@ router.post('/google-login', async (req, res) => {
     }
 
     // Generate token with _id 
-    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
 
     res.status(200).json({ token, message: 'Google login successful' });
   } catch (error) {
