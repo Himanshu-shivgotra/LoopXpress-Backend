@@ -154,6 +154,54 @@ router.put('/cart/update', authenticate, async (req, res) => {
 });
 
 
+// router.delete('/cart/:productId', authenticate, async (req, res) => {
+//   try {
+//     const consumerId = req.consumer?.id;
+//     const { productId } = req.params;
+
+//     // Find the consumer
+//     const consumer = await ConsumerModel.findById(consumerId);
+//     if (!consumer) {
+//       return res.status(404).json({ message: 'Consumer not found' });
+//     }
+
+//     // Debugging logs
+//     console.log("Cart before removal:", consumer.cart);
+
+//     // Remove the item with the matching productId
+//     const initialCartLength = consumer.cart.length;
+//     consumer.cart = consumer.cart.filter(
+//       item => String(item.productId) !== String(productId)
+//     );
+
+//     // Check if the item was actually removed
+//     if (consumer.cart.length === initialCartLength) {
+//       return res.status(404).json({ message: 'Product not found in cart' });
+//     }
+
+//     // Debugging: Log the cart after removal
+//     console.log("Cart after removal:", consumer.cart);
+
+//     // Save changes to the database
+//     const updatedConsumer = await consumer.save();
+
+//     // Log the saved consumer to check if changes are committed
+//     console.log("Consumer after save:", updatedConsumer);
+
+//     res.status(200).json({ message: 'Product removed from cart', cart: consumer.cart });
+//   } catch (error) {
+//     console.error("Error in removing item from cart:", error.message);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+
+
+
+
+// Google Sign-In
+
+
 router.post('/google-login', async (req, res) => {
   try {
     const { email, name, phoneNumber, address, dateOfBirth, uid } = req.body;
