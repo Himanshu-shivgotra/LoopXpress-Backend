@@ -231,7 +231,7 @@ router.post("/forgot-password", async (req, res) => {
           <p>This link will expire in <strong>1 hours</strong>. If you need a new link, you can request another password reset on our website.</p>
           <p>If you have any questions or need further assistance, please contact our support team.</p>
           <p>Best regards,</p>
-          <p><strong>Your Company Name</strong></p>
+          <p><strong>Loop International Trade and exports</strong></p>
           <p><em>This is an automated message, please do not reply directly to this email.</em></p>
         </div>
       `,
