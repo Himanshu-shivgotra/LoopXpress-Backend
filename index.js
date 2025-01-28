@@ -19,6 +19,7 @@ connectDB();
 const app = express();
 
 // Enable CORS with dynamic origin
+
 app.use(cors({
   origin: "*",
   methods: ['GET', 'POST', 'PUT', 'DELETE'],

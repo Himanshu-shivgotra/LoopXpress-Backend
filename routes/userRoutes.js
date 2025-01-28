@@ -42,7 +42,7 @@ router.post('/signin', async (req, res) => {
     const token = jwt.sign(
       { id: user._id, email: user.personalDetails.email },
       process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '2h' }
+      { expiresIn: '7d' }
     );
 
     res.json({
@@ -183,7 +183,7 @@ router.post('/forgot-password', async (req, res) => {
     // Generate a reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
+    user.resetPasswordExpires = Date.now() + 12 * 3600000; // Token expires in 1 hour
 
     await user.save();
 

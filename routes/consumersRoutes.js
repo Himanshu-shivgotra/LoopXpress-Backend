@@ -30,7 +30,7 @@ router.post('/signup', async (req, res) => {
     await newConsumer.save();
 
     // Generate token
-    const token = jwt.sign({ id: newConsumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: newConsumer._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({ token, message: 'Consumer registered successfully' });
   } catch (error) {
@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.status(200).json({ token, message: 'Login successful' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -222,7 +222,7 @@ router.post('/google-login', async (req, res) => {
     }
 
     // Generate token with _id 
-    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '5h' });
+    const token = jwt.sign({ id: consumer._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     res.status(200).json({ token, message: 'Google login successful' });
   } catch (error) {
