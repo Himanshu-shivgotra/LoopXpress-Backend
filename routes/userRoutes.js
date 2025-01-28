@@ -219,7 +219,7 @@ router.post("/forgot-password", async (req, res) => {
 
     const mailOptions = {
       to: user.personalDetails.email,
-      from: process.env.EMAIL_USER, // Use the same email as in the transporter
+      from: process.env.EMAIL_USER, 
       subject: "Password Reset Request",
       html: `
         <div style="font-family: Arial, sans-serif; color: #333;">
@@ -228,7 +228,7 @@ router.post("/forgot-password", async (req, res) => {
           <p>We received a request to reset your password. If you did not make this request, please ignore this email.</p>
           <p>To reset your password, click the link below:</p>
           <p><a href="${resetLink}" style="background-color: #4A90E2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
-          <p>This link will expire in <strong>12 hours</strong>. If you need a new link, you can request another password reset on our website.</p>
+          <p>This link will expire in <strong>1 hours</strong>. If you need a new link, you can request another password reset on our website.</p>
           <p>If you have any questions or need further assistance, please contact our support team.</p>
           <p>Best regards,</p>
           <p><strong>Your Company Name</strong></p>
