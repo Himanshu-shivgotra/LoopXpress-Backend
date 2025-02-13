@@ -1,9 +1,11 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import Admin from "../models/adminModel.js";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
-import authenticate from "../middleware/authenticate.js"; // Import middleware
+import bcrypt from "bcryptjs"
+import authenticate from "../middleware/authenticate.js"; 
 
 const router = express.Router();
 
@@ -19,42 +21,72 @@ router.post("/submit-form", async (req, res) => {
   }
 });
 
+
 // Login route
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ "personalDetails.email": email }).select(
+    // Check in the User collection
+    let user = await User.findOne({ "personalDetails.email": email }).select(
       "+personalDetails.password"
     );
 
+    // If not found in User collection, check in the Admin collection
     if (!user) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      const admin = await Admin.findOne({ email }).select("+password");
+
+      if (!admin) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+
+      // Compare the provided password with the stored hashed password for admin
+      const isMatch = await bcrypt.compare(password, admin.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+
+      // Generate a JWT token for admin
+      const token = jwt.sign(
+        { id: admin._id, email: admin.email, role: "admin" },
+        process.env.JWT_SECRET || "your_jwt_secret",
+        { expiresIn: "7d" }
+      );
+
+      // Return the response for admin
+      return res.json({
+        message: "Admin login successful",
+        token,
+        admin: {
+          id: admin._id,
+          email: admin.email,
+          name: admin.name,
+          role: "admin",
+        },
+      });
     }
 
-    // Compare the provided password with the stored hashed password
-    const isMatch = await user.isValidPassword(
-      password,
-      user.personalDetails.password
-    );
+    const isMatch = await bcrypt.compare(password, user.personalDetails.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Generate a JWT token
+    // Generate a JWT token for user
     const token = jwt.sign(
-      { id: user._id, email: user.personalDetails.email },
+      { id: user._id, email: user.personalDetails.email, role: "user" },
       process.env.JWT_SECRET || "your_jwt_secret",
       { expiresIn: "7d" }
     );
 
+    // Return the response for user
     res.json({
-      message: "Login successful",
+      message: "User login successful",
       token,
       user: {
         id: user._id,
         email: user.personalDetails.email,
         fullName: user.personalDetails.fullName,
+        role: "seller",
       },
     });
   } catch (error) {
@@ -62,6 +94,7 @@ router.post("/signin", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // Protected user info route
 router.get("/user-info", authenticate, async (req, res) => {
@@ -109,42 +142,6 @@ router.put("/update-personal-info", authenticate, async (req, res) => {
   }
 });
 
-// Update business info route
-router.put("/update-business-info", authenticate, async (req, res) => {
-  try {
-    const { businessDetails } = req.body;
-
-    // Update using findByIdAndUpdate to avoid triggering save middleware
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        $set: {
-          "businessDetails.businessName": businessDetails.businessName,
-          "businessDetails.businessType": businessDetails.businessType,
-          "businessDetails.brandName": businessDetails.brandName,
-          "businessDetails.businessPhone": businessDetails.businessPhone,
-          "businessDetails.businessEmail": businessDetails.businessEmail,
-          "businessDetails.gstNumber": businessDetails.gstNumber,
-          "businessDetails.otherBusinessType":
-            businessDetails.otherBusinessType,
-        },
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({
-      message: "Business info updated successfully",
-      businessDetails: updatedUser.businessDetails,
-    });
-  } catch (error) {
-    console.error("Error updating business info:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 // Update password route
 router.put("/update-password", authenticate, async (req, res) => {
@@ -186,7 +183,8 @@ router.put("/update-password", authenticate, async (req, res) => {
 
 
 
-router.post("/forgot-password", async (req, res) => {
+//forgot password
+ router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
 
   try {
