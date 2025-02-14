@@ -11,6 +11,7 @@ import paymentRoute from "./routes/paymentRoutes.js"
 import orderRoute from "./routes/orderTrackingRoutes.js"
 import consumerRoutes from './routes/consumersRoutes.js';
 import adminRoutes from './routes/adminRoutes.js'
+import inventoryRoutes from './routes/inventoryRoutes.js' 
 
 dotenv.config();
 const port = process.env.PORT || 5000;
@@ -43,6 +44,7 @@ app.use("/api/payment", paymentRoute)
 app.use("/api/orders", orderRoute)
 app.use("/api/consumers", consumerRoutes);
 app.use("/api/admin", adminRoutes)
+app.use("/api/inventory", inventoryRoutes)
 
 app.listen(port, () => console.log(`Server running on port: ${port}`));
 
