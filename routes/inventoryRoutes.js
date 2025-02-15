@@ -42,7 +42,8 @@ router.post('/add-product-inventory', verifyAuth, upload.array('images', 5), asy
                     product: req.body,
                     quantity: req.body.quantity,
                     location: req.body.location,
-                    imageUrls: imageUrls 
+                    imageUrls: imageUrls ,
+                    isWarehouseInventory:req.body.isWarehouseInventory,
                 };
             } catch (parseError) {
                 return res.status(400).json({ 
@@ -114,7 +115,7 @@ router.post('/add-product-inventory', verifyAuth, upload.array('images', 5), asy
         const inventory = new Inventory({
             productId: productDB._id,
             quantity: Number(productData.quantity) || 0,
-            location: productData.location || 'Default Location',
+            isWarehouseInventory: productData.isWarehouseInventory,
         });
 
         const savedInventory = await inventory.save();
@@ -141,6 +142,7 @@ router.get('/', verifyAuth, async (req, res) => {
             product: item.productId, // Include the populated product data
             location: item.location || 'no Location',
             quantity: item.quantity || 'No Quantity',
+            isWarehouseInventory:item.isWarehouseInventory || 'true',
             lastUpdated: item.lastUpdated,
             // Add other necessary fields from both inventory and product
             // ...(item.productId && {
