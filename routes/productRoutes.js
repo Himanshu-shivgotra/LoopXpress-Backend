@@ -7,26 +7,28 @@ import cloudinary from '../config/cloudinary.js';
 const router = express.Router();
 
 // Add new product
-router.post('/add-product', verifyAuth, upload.array('images', 5), async (req, res) => {
+router.post('/add-product', verifyAuth, upload.array('images'), async (req, res) => {
   try {
-    // Upload images to Cloudinary
-    const uploadPromises = req.files.map(file => {
-      return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            folder: 'products',
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result.secure_url);
-          }
-        );
-
-        uploadStream.end(file.buffer);
+    let imageUrls = [];
+    
+    // Check if files were uploaded
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map(file => {
+        return new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              folder: 'products',
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result.secure_url);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
       });
-    });
-
-    const imageUrls = await Promise.all(uploadPromises);
+      imageUrls = await Promise.all(uploadPromises);
+    }
 
     const product = new Product({
       title: req.body.title,
