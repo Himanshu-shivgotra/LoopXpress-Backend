@@ -4,6 +4,8 @@ import verifyAuth from '../middleware/verifyAuth.js';
 import Product from '../models/product.js';
 import upload from '../middleware/upload.js';
 import cloudinary from '../config/cloudinary.js';
+import Cart from '../models/cartModel.js';
+import authenticate from '../middleware/authenticate.js';
 
 const router = express.Router();
 
@@ -75,19 +77,6 @@ router.post('/add-product-inventory', verifyAuth, upload.array('images', 5), asy
                 received: productData
             });
         }
-
-        // Validate required fields
-        // const missingFields = [];
-        // if (!productData.product.title) missingFields.push('title');
-        // if (!productData.product.brand) missingFields.push('brand');
-
-        // if (missingFields.length > 0) {
-        //     return res.status(400).json({ 
-        //         error: 'Complete product details are required',
-        //         missingFields: missingFields,
-        //         receivedProduct: productData.product
-        //     });
-        // }
 
         // Create new product object with image URLs
         const newProduct = {
@@ -164,5 +153,205 @@ router.get('/', verifyAuth, async (req, res) => {
     }
 });
 
+// Add to cart route
+router.post('/cart', authenticate, async (req, res) => {
+    try {
+        const { 
+            productId, 
+            quantity, 
+        } = req.body;
+        const userId = req.user.id;
+
+        // Validate productId exists
+        if (!productId) {
+            return res.status(400).json({ 
+                error: 'Product ID is required',
+            });
+        }
+        // Find or create cart for user
+        let cart = await Cart.findOne({ user: userId });
+        
+        if (!cart) {
+            cart = new Cart({
+                user: userId,
+                items: []
+            });
+        }
+
+        // Check if product already exists in cart
+        const existingItemIndex = cart.items.findIndex(item => 
+            item.product && item.product.toString() === productId
+        );
+        
+        if (existingItemIndex !== -1) {
+            // Update quantity if product exists
+            cart.items[existingItemIndex].quantity += quantity;
+        } else {
+            // Add new product to cart
+            cart.items.push({
+                product: productId,
+                quantity: quantity || 1,
+            });
+        }
+
+        await cart.save();
+        
+        res.status(200).json({
+            message: 'Product added to cart successfully',
+            cart
+        });
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        res.status(500).json({ 
+            error: 'Failed to add product to cart',
+            details: error.message 
+        });
+    }
+});
+
+// Get cart count route
+router.get('/cart/count', verifyAuth, async (req, res) => {
+    try {
+        const cart = await Cart.findOne({ user: req.user.id });
+        const count = cart ? cart.items.reduce((acc, item) => acc + item.quantity, 0) : 0;
+        
+        res.status(200).json({ count });
+    } catch (error) {
+        console.error('Error getting cart count:', error);
+        res.status(500).json({ 
+            error: 'Failed to get cart count',
+            details: error.message 
+        });
+    }
+});
+
+// Get cart items route
+router.get('/cart', authenticate, async (req, res) => {
+    try {
+        const cart = await Cart.findOne({ user: req.user.id })
+            .populate({
+                path: 'items.product',
+                select: 'title brand category discountedPrice originalPrice imageUrls quantity location'
+            });
+        
+        if (!cart) {
+            return res.status(200).json({ items: [] });
+        }
+
+        // Transform the cart items to match the frontend expectations
+        const transformedItems = cart.items.map(item => ({
+            _id: item._id,
+            product: {
+                _id: item.product._id,
+                title: item.product.title,
+                brand: item.product.brand,
+                category: item.product.category,
+                discountedPrice: item.product.discountedPrice,
+                originalPrice: item.product.originalPrice,
+                imageUrls: item.product.imageUrls,
+                quantity: item.product.quantity,
+                location: item.product.location
+            },
+            quantity: item.quantity
+        }));
+
+        res.status(200).json({ items: transformedItems });
+    } catch (error) {
+        console.error('Error fetching cart:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch cart items',
+            details: error.message 
+        });
+    }
+});
+
+// Remove item from cart
+router.delete('/cart/:itemId', authenticate, async (req, res) => {
+    try {
+        const { itemId } = req.params;
+        const userId = req.user.id;
+
+        const cart = await Cart.findOne({ user: userId });
+        if (!cart) {
+            return res.status(404).json({ error: 'Cart not found' });
+        }
+
+        // Filter out the item to be removed
+        cart.items = cart.items.filter(item => item._id.toString() !== itemId);
+        await cart.save();
+
+        res.status(200).json({ message: 'Item removed successfully', cart });
+    } catch (error) {
+        console.error('Error removing item:', error);
+        res.status(500).json({ 
+            error: 'Failed to remove item from cart',
+            details: error.message 
+        });
+    }
+});
+
+// Increase item quantity
+router.put('/cart/:itemId/increase', authenticate, async (req, res) => {
+    try {
+        const { itemId } = req.params;
+        const userId = req.user.id;
+
+        const cart = await Cart.findOne({ user: userId });
+        if (!cart) {
+            return res.status(404).json({ error: 'Cart not found' });
+        }
+
+        // Find and update the item quantity
+        const item = cart.items.find(item => item._id.toString() === itemId);
+        if (!item) {
+            return res.status(404).json({ error: 'Item not found in cart' });
+        }
+
+        item.quantity += 1;
+        await cart.save();
+
+        res.status(200).json({ message: 'Quantity increased successfully', cart });
+    } catch (error) {
+        console.error('Error increasing quantity:', error);
+        res.status(500).json({ 
+            error: 'Failed to increase quantity',
+            details: error.message 
+        });
+    }
+});
+
+// Decrease item quantity
+router.put('/cart/:itemId/decrease', authenticate, async (req, res) => {
+    try {
+        const { itemId } = req.params;
+        const userId = req.user.id;
+
+        const cart = await Cart.findOne({ user: userId });
+        if (!cart) {
+            return res.status(404).json({ error: 'Cart not found' });
+        }
+
+        // Find and update the item quantity
+        const item = cart.items.find(item => item._id.toString() === itemId);
+        if (!item) {
+            return res.status(404).json({ error: 'Item not found in cart' });
+        }
+
+        // Ensure quantity doesn't go below 1
+        if (item.quantity > 1) {
+            item.quantity -= 1;
+        }
+
+        await cart.save();
+
+        res.status(200).json({ message: 'Quantity decreased successfully', cart });
+    } catch (error) {
+        console.error('Error decreasing quantity:', error);
+        res.status(500).json({ 
+            error: 'Failed to decrease quantity',
+            details: error.message 
+        });
+    }
+});
 
 export default router;

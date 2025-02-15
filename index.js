@@ -12,6 +12,7 @@ import orderRoute from "./routes/orderTrackingRoutes.js"
 import consumerRoutes from './routes/consumersRoutes.js';
 import adminRoutes from './routes/adminRoutes.js'
 import inventoryRoutes from './routes/inventoryRoutes.js' 
+import './models/cartModel.js';
 
 dotenv.config();
 const port = process.env.PORT || 5000;
