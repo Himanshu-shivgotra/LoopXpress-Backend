@@ -154,7 +154,7 @@ router.get('/', verifyAuth, async (req, res) => {
 });
 
 // Add to cart route
-router.post('/cart', authenticate, async (req, res) => {
+router.post('/add-to-cart', authenticate, async (req, res) => {
     try {
         const { 
             productId, 
@@ -226,12 +226,12 @@ router.get('/cart/count', verifyAuth, async (req, res) => {
 });
 
 // Get cart items route
-router.get('/cart', authenticate, async (req, res) => {
+router.get('/get-cart', authenticate, async (req, res) => {
     try {
         const cart = await Cart.findOne({ user: req.user.id })
             .populate({
                 path: 'items.product',
-                select: 'title brand category discountedPrice originalPrice imageUrls quantity location'
+                select: 'title brand category discountedPrice originalPrice imageUrls quantity location subcategory'
             });
         
         if (!cart) {
@@ -250,7 +250,8 @@ router.get('/cart', authenticate, async (req, res) => {
                 originalPrice: item.product.originalPrice,
                 imageUrls: item.product.imageUrls,
                 quantity: item.product.quantity,
-                location: item.product.location
+                location: item.product.location,
+                subcategory:item.product.subcategory
             },
             quantity: item.quantity
         }));
@@ -349,6 +350,29 @@ router.put('/cart/:itemId/decrease', authenticate, async (req, res) => {
         console.error('Error decreasing quantity:', error);
         res.status(500).json({ 
             error: 'Failed to decrease quantity',
+            details: error.message 
+        });
+    }
+});
+
+// Clear cart route
+router.delete('/clear-cart', authenticate, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const cart = await Cart.findOne({ user: userId });
+        if (!cart) {
+            return res.status(404).json({ error: 'Cart not found' });
+        }
+
+        // Clear all items from the cart
+        cart.items = [];
+        await cart.save();
+
+        res.status(200).json({ message: 'Cart cleared successfully' });
+    } catch (error) {
+        console.error('Error clearing cart:', error);
+        res.status(500).json({ 
+            error: 'Failed to clear cart',
             details: error.message 
         });
     }

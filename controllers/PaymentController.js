@@ -65,18 +65,20 @@ export const paymentVerification = async (req, res) => {
 
             // Save each item in the order
             for (const item of items) {
-                await Order.create({
-                    razorpay_order_id,
-                    razorpay_payment_id,
-                    razorpay_signature,
-                    status: "Order Placed",
-                    amount,
-                    currency,
-                    title: item.title,
-                    brand: item.brand,
-                    category: item.category,
-                    subcategory: item.subcategory
-                });
+                if (item.title && item.brand && item.category && item.subcategory) {
+                    await Order.create({
+                        razorpay_order_id,
+                        razorpay_payment_id,
+                        razorpay_signature,
+                        status: "Order Placed",
+                        amount,
+                        currency,
+                        title: item.title,
+                        brand: item.brand,
+                        category: item.category,
+                        subcategory: item.subcategory
+                    });
+                }
             }
 
             res.status(200).json({
