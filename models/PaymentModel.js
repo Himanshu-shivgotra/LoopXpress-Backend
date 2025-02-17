@@ -35,15 +35,15 @@ const paymentSchema = new mongoose.Schema({
 const orderSchema = new mongoose.Schema({
     razorpay_order_id: {
         type: String,
-        required: true,
+        required: false,
     },
     razorpay_payment_id: {
         type: String,
-        required: true,
+        required: false,
     },
     razorpay_signature: {
         type: String,
-        required: true,
+        required: false,
     },
     amount: {
         type: Number,

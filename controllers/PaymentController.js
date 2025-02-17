@@ -4,43 +4,67 @@ import { instance } from "../index.js";
 
 export const checkout = async (req, res) => {
     try {
-        const { amount } = req.body;
-        // Validate amount
-        if (!amount) {
-            return res.status(400).json({ success: false, message: "Amount is required" });
-        }
-        if (Number(amount) > 1000000) {
+        const { orderId, amount } = req.body;
+    
+        // Validate required fields
+        if (!orderId || !amount) {
             return res.status(400).json({
                 success: false,
-                message: "Amount exceeds the maximum allowed value of ₹10,00,000",
+                message: "Order ID and amount are required"
             });
         }
 
+        // Verify order exists and is approved
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+        if (order.approvalStatus !== 'Approved') {
+            return res.status(400).json({
+                success: false,
+                message: "Order is not approved for payment"
+            });
+        }
+
+        // Create Razorpay order
         const options = {
-            amount: Math.round(Number(amount) * 100),
+            amount: Number(amount), // Ensure amount is a number
             currency: "INR",
         };
-        const order = await instance.orders.create(options);
+        const razorpayOrder = await instance.orders.create(options);
+
+        // Update order with Razorpay order ID
+        await Order.findByIdAndUpdate(orderId, {
+            razorpay_order_id: razorpayOrder.id
+        });
 
         res.status(200).json({
             success: true,
-            order,
+            order: razorpayOrder,
         });
     } catch (error) {
-        console.error("Error during checkout:", error.message);
+        console.error("Error during checkout:", error);
         res.status(500).json({
             success: false,
             message: "Internal Server Error",
+            error: error.message // Include error message for debugging
         });
     }
 };
 
 export const paymentVerification = async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount, currency, items } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !amount || !currency || !items) {
-            return res.status(400).json({ success: false, message: "Invalid payment data" });
+        // Validate minimum required fields
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid payment data: Missing required fields" 
+            });
         }
 
         const body = `${razorpay_order_id}|${razorpay_payment_id}`;
@@ -58,28 +82,16 @@ export const paymentVerification = async (req, res) => {
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature,
-                amount,
-                currency
+                amount: req.body.amount || 0,  
+                currency: req.body.currency || "INR"  
             });
 
-            // Save each item in the order
-            for (const item of items) {
-                if (item.title && item.brand && item.category && item.subcategory && item.discountedPrice) {
-                    await Order.create({
-                        razorpay_order_id,
-                        razorpay_payment_id,
-                        razorpay_signature,
-                        status: "Order Placed",
-                        amount,
-                        discountedPrice: item.discountedPrice,
-                        currency,
-                        title: item.title,
-                        brand: item.brand,
-                        category: item.category,
-                        subcategory: item.subcategory
-                    });
-                }
-            }
+            // Update the order status
+            await Order.findOneAndUpdate(
+                { razorpay_order_id },
+                { status: "Order Placed" },
+                { new: true }
+            );
 
             res.status(200).json({
                 success: true,
@@ -90,7 +102,7 @@ export const paymentVerification = async (req, res) => {
         } else {
             res.status(400).json({
                 success: false,
-                message: "Payment verification failed",
+                message: "Payment verification failed: Invalid signature",
             });
         }
     } catch (error) {
@@ -98,6 +110,7 @@ export const paymentVerification = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Internal Server Error",
+            error: error.message
         });
     }
 };
@@ -111,7 +124,7 @@ export const createOrderRequest = async (req, res) => {
             return res.status(400).json({ success: false, message: "Amount is required" });
         }
 
-        // Create order requests without payment
+        // Create order requests without payment details
         const orderRequests = await Promise.all(items.map(async (item) => {
             return await Order.create({
                 amount,
@@ -121,7 +134,7 @@ export const createOrderRequest = async (req, res) => {
                 brand: item.brand,
                 category: item.category,
                 subcategory: item.subcategory,
-                approvalStatus: 'Pending'
+                approvalStatus: 'Pending',
             });
         }));
 
@@ -187,6 +200,31 @@ export const rejectOrder = async (req, res) => {
         });
     } catch (error) {
         console.error("Error rejecting order:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
+
+export const getOrderById = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const order = await Order.findById(orderId);
+        
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            order
+        });
+    } catch (error) {
+        console.error("Error fetching order:", error.message);
         res.status(500).json({
             success: false,
             message: "Internal Server Error",
