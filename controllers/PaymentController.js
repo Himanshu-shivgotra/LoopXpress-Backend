@@ -5,7 +5,6 @@ import { instance } from "../index.js";
 export const checkout = async (req, res) => {
     try {
         const { amount } = req.body;
-
         // Validate amount
         if (!amount) {
             return res.status(400).json({ success: false, message: "Amount is required" });
@@ -65,13 +64,14 @@ export const paymentVerification = async (req, res) => {
 
             // Save each item in the order
             for (const item of items) {
-                if (item.title && item.brand && item.category && item.subcategory) {
+                if (item.title && item.brand && item.category && item.subcategory && item.discountedPrice) {
                     await Order.create({
                         razorpay_order_id,
                         razorpay_payment_id,
                         razorpay_signature,
                         status: "Order Placed",
                         amount,
+                        discountedPrice: item.discountedPrice,
                         currency,
                         title: item.title,
                         brand: item.brand,
@@ -95,6 +95,98 @@ export const paymentVerification = async (req, res) => {
         }
     } catch (error) {
         console.error("Error during payment verification:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
+
+export const createOrderRequest = async (req, res) => {
+    try {
+        const { amount, items } = req.body;
+
+        // Validate amount
+        if (!amount) {
+            return res.status(400).json({ success: false, message: "Amount is required" });
+        }
+
+        // Create order requests without payment
+        const orderRequests = await Promise.all(items.map(async (item) => {
+            return await Order.create({
+                amount,
+                discountedPrice: item.discountedPrice,
+                currency: "INR",
+                title: item.title,
+                brand: item.brand,
+                category: item.category,
+                subcategory: item.subcategory,
+                approvalStatus: 'Pending'
+            });
+        }));
+
+        res.status(200).json({
+            success: true,
+            message: "Order request created successfully",
+            orderRequests
+        });
+    } catch (error) {
+        console.error("Error creating order request:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
+
+// Add new controller for approving orders
+export const approveOrder = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const order = await Order.findByIdAndUpdate(
+            orderId,
+            { approvalStatus: 'Approved' },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Order approved successfully",
+            order
+        });
+    } catch (error) {
+        console.error("Error approving order:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
+
+export const rejectOrder = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const order = await Order.findByIdAndUpdate(
+            orderId,
+            { approvalStatus: 'Rejected' },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Order rejected successfully",
+            order
+        });
+    } catch (error) {
+        console.error("Error rejecting order:", error.message);
         res.status(500).json({
             success: false,
             message: "Internal Server Error",

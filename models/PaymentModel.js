@@ -49,6 +49,10 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    discountedPrice:{
+        type: Number,
+        required: true,
+    },
     currency: {
         type: String,
         required: true,
@@ -73,6 +77,11 @@ const orderSchema = new mongoose.Schema({
         type: String,
         enum: ['Order Placed', 'Order Transit', 'Out for Delivery', 'Delivered'],
         default: 'Order Placed',
+    },
+    approvalStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending',
     },
     createdAt: {
         type: Date,

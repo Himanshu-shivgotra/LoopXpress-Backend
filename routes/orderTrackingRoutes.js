@@ -37,19 +37,32 @@ router.route('/update/:orderId').put(validateOrderStatus, async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
     try {
-        const order = await Order.findOneAndUpdate(
+        const orders = await Order.updateMany(
             { razorpay_order_id: orderId },
             { status },
             { new: true }
-        ).select('-razorpay_signature');
-        if (order) {
-            res.status(200).json({ success: true, order });
+        );
+
+        if (orders.modifiedCount > 0) {
+            const updatedOrders = await Order.find({ razorpay_order_id: orderId })
+                .select('-razorpay_signature');
+            res.status(200).json({ 
+                success: true, 
+                orders: updatedOrders 
+            });
         } else {
-            res.status(404).json({ success: false, message: 'Order not found' });
+            res.status(404).json({ 
+                success: false, 
+                message: 'No orders found with that ID' 
+            });
         }
     } catch (error) {
         console.error(`[Order Update] Server error: ${error.message}`);
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error', 
+            error: error.message 
+        });
     }
 });
 
