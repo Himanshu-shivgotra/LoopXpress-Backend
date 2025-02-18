@@ -86,7 +86,11 @@ const orderSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now,
-    }
+    },
+    address: {
+        type: String,
+        required: true
+    },
 });
 
 

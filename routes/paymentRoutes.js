@@ -7,6 +7,7 @@ import {
     rejectOrder,
     getOrderById 
 } from '../controllers/PaymentController.js';
+import { Order } from '../models/PaymentModel.js';
 
 const router = express.Router();
 
