@@ -9,7 +9,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const router = express.Router();
 
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, {
+  apiVersion: 'v1'
+});
 
 // Add new product
 router.post('/add-product', verifyAuth, upload.array('images'), async (req, res) => {
@@ -219,17 +221,17 @@ router.post('/generate-description', async (req, res) => {
       return res.status(400).json({ error: 'Title is required' });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    const prompt = `Generate 5-6 detailed bullet points describing a product titled "${title}". 
-Each point should be comprehensive and informative, providing in-depth features and benefits. Format the response as numbered points (1., 2., 3., etc.).`;
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `Generate 4-5 detailed bullet points describing a product titled "${title}". 
+Each point should be comprehensive short and informative, providing in-depth features and benefits. Format the response as numbered points (1., 2., 3., etc.).`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-  
+    
     // Parse the response into an array of points
     const points = text.split('\n')
-      .map(line => line.replace(/^\s*[-•]\s*/, '').trim())
+      .map(line => line.replace(/^\s*\d+\.\s*/, '').trim())
       .filter(line => line.length > 0);
 
     res.json({ points });
