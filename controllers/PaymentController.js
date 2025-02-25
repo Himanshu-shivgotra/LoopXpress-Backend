@@ -105,7 +105,6 @@ export const paymentVerification = async (req, res) => {
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
             { 
-                status: "Paid",
                 payment: payment._id
             },
             { new: true }
